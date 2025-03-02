@@ -1,4 +1,20 @@
+# Ignorar el entorno virtual de Python
 venv/
+
+# Archivos de configuración sensibles
 .env
+
+# Archivos temporales de Python
 *.pyc
 __pycache__/
+
+# Archivos del sistema operativo
+*.DS_Store
+Thumbs.db
+
+# Archivos y carpetas del editor de código
+.idea/
+.vscode/
+
+# Archivos temporales o de registro
+*.log
