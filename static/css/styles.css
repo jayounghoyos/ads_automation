@@ -28,10 +28,11 @@ header {
     margin: 10px;
 }
 
-.input-section input {
+.vacancy-input input {
     padding: 8px;
-    width: 70%;
-    margin-right: 10px;
+    width: 40%;
+    max-width: 500px;
+    box-sizing: border-box;
 }
 
 .automate-button {
@@ -47,7 +48,6 @@ header {
     background-color: #27ae60;
 }
 
-/* Nuevas reglas CSS */
 button {
     border-radius: 5px;
     transition: background-color 0.3s;

@@ -1,8 +1,13 @@
+# main.py
 import os
 import time
 from dotenv import load_dotenv
 import tweepy
 import pandas as pd
+import sys
+
+# Forzar la codificación a UTF-8 para evitar errores de Unicode
+sys.stdout.reconfigure(encoding='utf-8')
 
 # Cargar las credenciales de la API desde el archivo .env
 load_dotenv()
@@ -37,7 +42,7 @@ try:
         print(f"Archivo no encontrado: {csv_path}")
         exit()
 
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, dtype={'Job Id': str})  # Asegurarse de que los IDs sean cadenas
 
     # Función para crear un tweet a partir de una fila del DataFrame con formato
     def crear_tweet(row):
@@ -57,8 +62,7 @@ try:
         
         return tweet_text.strip()
 
-
-    # Opción 1: Publicar una vacante específica por ID
+    # Publicar una vacante específica por ID
     def publicar_por_id(vacante_id):
         row = df[df['Job Id'] == vacante_id]
         
@@ -76,7 +80,7 @@ try:
         else:
             print(f"La vacante con ID {vacante_id} no existe.")
 
-    # Opción 2: Publicar varias vacantes por una lista de IDs
+    # Publicar múltiples vacantes por una lista de IDs
     def publicar_varias_ids(lista_ids, delay=10):
         for vacante_id in lista_ids:
             publicar_por_id(vacante_id)
@@ -86,12 +90,13 @@ try:
                 print("Proceso interrumpido manualmente.")
                 break
 
-    # Ejemplos de uso:
-    # Publicar una sola vacante por ID
-    publicar_por_id(5)
-
-    # Publicar múltiples vacantes por una lista de IDs
-    # publicar_varias_ids([1, 2, 3], delay=5)
+    # Obtener los IDs de las vacantes desde los argumentos de línea de comandos
+    if len(sys.argv) > 1:
+        ids = sys.argv[1:]
+        print(f"Publicando vacantes con IDs: {ids}")
+        publicar_varias_ids(ids, delay=5)
+    else:
+        print("No se proporcionaron IDs de vacantes para publicar.")
 
 except Exception as e:
     print(f"Error general: {e}")

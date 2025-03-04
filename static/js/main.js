@@ -2,32 +2,35 @@
 
 const selectedVacancies = [];
 
+// Obtener el token CSRF del meta tag
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
 function addVacancy() {
     const input = document.getElementById('vacancyInput');
     const inputValues = input.value.trim();
 
     if (!inputValues) {
-        alert('Por favor, ingresa uno o más IDs de vacantes.');
+        alert('Please enter one or more vacancy IDs.');
         return;
     }
 
-    // Separar los IDs por comas y eliminar espacios
     const vacancyIds = inputValues.split(',').map(id => id.trim());
 
-    // Validar cada ID individualmente
     vacancyIds.forEach(vacancyId => {
         if (isNaN(vacancyId) || parseInt(vacancyId) <= 0) {
-            alert(`El ID "${vacancyId}" no es un número positivo válido.`);
+            alert(`The ID "${vacancyId}" is not a valid positive number.`);
             return;
         }
 
         if (selectedVacancies.some(v => v.id === vacancyId)) {
-            alert(`La vacante con ID "${vacancyId}" ya ha sido agregada.`);
+            alert(`The vacancy with ID "${vacancyId}" has already been added.`);
             return;
         }
 
         if (!jobData[vacancyId]) {
-            alert(`El ID "${vacancyId}" no es válido. Intenta con otro ID.`);
+            alert(`The ID "${vacancyId}" is not valid. Try another ID.`);
             return;
         }
 
@@ -39,17 +42,16 @@ function addVacancy() {
     input.value = '';
 }
 
-
 function renderVacancyList() {
     const list = document.getElementById('vacancyList');
     list.innerHTML = '';
 
     selectedVacancies.forEach((vacancy, index) => {
         const li = document.createElement('li');
-        li.innerHTML = `Vacante ID: ${vacancy.id} <br> Job Title: ${vacancy.title}`;
+        li.innerHTML = `Vacancy ID: ${vacancy.id} <br> Job Title: ${vacancy.title}`;
 
         const removeButton = document.createElement('button');
-        removeButton.textContent = 'Eliminar';
+        removeButton.textContent = 'Remove';
         removeButton.onclick = () => {
             selectedVacancies.splice(index, 1);
             renderVacancyList();
@@ -62,8 +64,32 @@ function renderVacancyList() {
 
 function automatizar() {
     if (selectedVacancies.length === 0) {
-        alert('No hay vacantes seleccionadas para automatizar.');
+        alert('No vacancies selected to automate.');
         return;
     }
-    alert(`Automatizando la publicación de ${selectedVacancies.length} vacante(s)`);
+
+    fetch('/publicar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({ vacancies: selectedVacancies }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert('Vacancies have been published successfully!');
+        } else {
+            alert('Failed to publish vacancies.');
+        }
+    })
+    .catch(error => {
+        console.error('Error publishing vacancies:', error);
+    });
 }

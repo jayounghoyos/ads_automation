@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrador de Vacantes</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="shortcut icon" href="{% static 'images/magneto_logo.svg' %}" type="image/svg+xml">
+    <!-- Agregar el token CSRF correctamente -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 <body>
     <header>
@@ -21,21 +24,21 @@
         </div>
         
         <div class="vacancy-input">
-            <h3>Vacantes Seleccionadas</h3>
-            <input type="text" id="vacancyInput" placeholder="Agrega IDs de vacantes (e.g., 1,2,3)">
-            <button onclick="addVacancy()">Agregar Vacante</button>
+            <h3>Select Vacancies</h3>
+            <input type="text" id="vacancyInput" placeholder="Add Vacancy IDs (example: 1,2,3)">
+            <button onclick="addVacancy()">Add Vacancy</button>
         </div>
 
         <ul id="vacancyList"></ul>
 
-        <button class="automate-button" onclick="automatizar()">Automatizar</button>
+        <button class="automate-button" onclick="automatizar()">Automate</button>
         
         <!-- Datos del Job Title desde Django -->
         <script>
             let jobData = {}; 
 
             try {
-                jobData = JSON.parse(`{{ job_data|escapejs }}`);
+                jobData = JSON.parse(`{{ job_data|safe }}`);
                 console.log('Datos de Job Data:', jobData);
             } catch (error) {
                 console.error('Error al parsear jobData:', error);
