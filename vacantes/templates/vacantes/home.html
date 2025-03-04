@@ -29,46 +29,21 @@
         <ul id="vacancyList"></ul>
 
         <button class="automate-button" onclick="automatizar()">Automatizar</button>
-    </main>
+        
+        <!-- Datos del Job Title desde Django -->
+        <script>
+            let jobData = {}; 
 
-    <script>
-        const selectedVacancies = [];
-
-        function addVacancy() {
-            const input = document.getElementById('vacancyInput');
-            const vacancy = input.value.trim();
-
-            if (vacancy && !selectedVacancies.includes(vacancy)) {
-                selectedVacancies.push(vacancy);
-                renderVacancyList();
-                input.value = '';
+            try {
+                jobData = JSON.parse(`{{ job_data|escapejs }}`);
+                console.log('Datos de Job Data:', jobData);
+            } catch (error) {
+                console.error('Error al parsear jobData:', error);
             }
-        }
+        </script>
 
-        function renderVacancyList() {
-            const list = document.getElementById('vacancyList');
-            list.innerHTML = '';
-
-            selectedVacancies.forEach((vacancy, index) => {
-                const li = document.createElement('li');
-                li.textContent = `Vacante ID: ${vacancy}`;
-
-                const removeButton = document.createElement('button');
-                removeButton.textContent = 'Eliminar';
-                removeButton.onclick = () => {
-                    selectedVacancies.splice(index, 1);
-                    renderVacancyList();
-                };
-
-                li.appendChild(removeButton);
-                list.appendChild(li);
-            });
-        }
-
-        function automatizar() {
-            alert(`Automatizando la publicación de ${selectedVacancies.length} vacante(s)`);
-            // Aquí puedes llamar al script de automatización con una llamada AJAX o redirigir a otra vista
-        }
-    </script>
+        <!-- Incluir el archivo JS externo -->
+        <script src="{% static 'js/main.js' %}"></script>
+    </main>
 </body>
 </html>
