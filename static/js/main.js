@@ -4,33 +4,41 @@ const selectedVacancies = [];
 
 function addVacancy() {
     const input = document.getElementById('vacancyInput');
-    const vacancyId = input.value.trim();
+    const inputValues = input.value.trim();
 
-    if (!vacancyId) {
-        alert('Por favor, ingresa un ID de vacante.');
+    if (!inputValues) {
+        alert('Por favor, ingresa uno o más IDs de vacantes.');
         return;
     }
 
-    if (isNaN(vacancyId) || parseInt(vacancyId) <= 0) {
-        alert('El ID de la vacante debe ser un número positivo.');
-        return;
-    }
+    // Separar los IDs por comas y eliminar espacios
+    const vacancyIds = inputValues.split(',').map(id => id.trim());
 
-    if (selectedVacancies.some(v => v.id === vacancyId)) {
-        alert('Esta vacante ya ha sido agregada.');
-        return;
-    }
+    // Validar cada ID individualmente
+    vacancyIds.forEach(vacancyId => {
+        if (isNaN(vacancyId) || parseInt(vacancyId) <= 0) {
+            alert(`El ID "${vacancyId}" no es un número positivo válido.`);
+            return;
+        }
 
-    if (!jobData[vacancyId]) {
-        alert('El ID de la vacante no es válido. Intenta con otro ID.');
-        return;
-    }
+        if (selectedVacancies.some(v => v.id === vacancyId)) {
+            alert(`La vacante con ID "${vacancyId}" ya ha sido agregada.`);
+            return;
+        }
 
-    const jobTitle = jobData[vacancyId];
-    selectedVacancies.push({ id: vacancyId, title: jobTitle });
+        if (!jobData[vacancyId]) {
+            alert(`El ID "${vacancyId}" no es válido. Intenta con otro ID.`);
+            return;
+        }
+
+        const jobTitle = jobData[vacancyId];
+        selectedVacancies.push({ id: vacancyId, title: jobTitle });
+    });
+
     renderVacancyList();
     input.value = '';
 }
+
 
 function renderVacancyList() {
     const list = document.getElementById('vacancyList');
