@@ -22,7 +22,6 @@ access_token_secret = os.getenv("ACCESS_TOKEN_SECRET")
 if not all([api_key, api_secret, bearer_token, access_token, access_token_secret]):
     print("Error: Faltan credenciales en el archivo .env")
     exit()
-
 try:
     # Crear cliente de la API v2
     client = tweepy.Client(bearer_token, api_key, api_secret, access_token, access_token_secret)
