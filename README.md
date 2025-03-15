@@ -1,8 +1,8 @@
 # Ads automation with Tweepy
 
-# Como correr códig
-# Documentacion
-# Descripcion 
-# Estructra de archivos
-# Estructra de csv
-# Funciones de javascriopt más importantes del proyecto
+# How to run it
+# Documentation
+# Description
+# File Structure
+# CSV Structure
+# Most important functions
