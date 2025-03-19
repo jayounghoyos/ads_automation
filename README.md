@@ -1,4 +1,4 @@
-# Ads automation with Tweepy
+
 
 # Description
 This project automates job postings on various social media platforms, such as X (Twitter), Meta and Snapchat, using the Django framework. It allows users to upload a CSV file containing job offers, which are then processed and published automatically via APIs. The automation is powered by Tweepy for seamless social media integration.
