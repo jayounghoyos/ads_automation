@@ -31,10 +31,7 @@ This project automates job postings on various social media platforms, such as X
 * **APIs:** Tweepy (Twitter API), Meta API
 * **CSV Handling:** Pandas
 
-# Description
-# File Structure
 # CSV Structure
-
 
 # Most important functions
 
