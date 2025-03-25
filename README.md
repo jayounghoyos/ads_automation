@@ -37,7 +37,8 @@ This project automates job postings on various social media platforms, such as X
 
 This project utilizes a structured CSV file to store job vacancy information. The file consists of various fields that define each job posting, including details about the **position, company, location, qualifications, and contact information**.
 
-### **CSV Fields Description**  
+
+### **CSV Fields Description** 
 
 | Column Name         | Description |
 |---------------------|-------------|
