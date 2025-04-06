@@ -5,6 +5,8 @@ import requests
 import time
 from transformers import pipeline
 from dotenv import load_dotenv
+from backend.database import SessionLocal
+from backend.crud import get_vacantes
 
 # Cargar credenciales de API
 load_dotenv()
@@ -39,7 +41,7 @@ query = "(#buscoEmpleo OR #buscotrabajo) -is:retweet " #OR #Trabajo OR #Vacante 
 tweet_fields = ["id", "text", "created_at", "author_id"]
 user_fields = ["username"]
 expansions = ["author_id"]
-max_results = 100  # Aumentamos para capturar más tweets
+max_results = 10  # Aumentamos para capturar más tweets
 
 # Ruta de almacenamiento de datos
 data_path = "data"
@@ -122,28 +124,23 @@ def buscar_tweets():
         print(f"❌ Error buscando tweets: {e}")
         return []
 
-def cargar_vacantes():
-    """Carga vacantes desde el archivo vacantes.csv en la carpeta jobs."""
-    print("📂 Cargando vacantes...")
-    vacantes_path = os.path.join("jobs", "vacantes.csv")
-
+def cargar_vacantes_desde_db():
+    print("🗃️ Cargando vacantes desde la base de datos...")
     try:
-        if not os.path.exists(vacantes_path):
-            print("⚠️ No se encontró vacantes.csv en la carpeta jobs.")
-            return []
-
-        df = pd.read_csv(vacantes_path, encoding="utf-8", delimiter=",", on_bad_lines="skip")
-        if df.empty:
-            print("⚠️ No hay vacantes disponibles en el archivo.")
-            return []
-
-        df = df.fillna("No especificado")
-        vacantes = df[["Job Title", "Job Description", "skills", "Company"]].dropna()
-        print(f"✅ {len(vacantes)} vacantes cargadas correctamente.")
-        return vacantes.to_dict(orient="records")
-
+        db = SessionLocal()
+        vacantes = get_vacantes(db)
+        db.close()
+        return [
+            {
+                "Job Title": v.title,
+                "Job Description": v.description,
+                "skills": v.skills,
+                "Company": v.company
+            }
+            for v in vacantes
+        ]
     except Exception as e:
-        print(f"❌ Error cargando vacantes: {e}")
+        print(f"❌ Error cargando vacantes desde la DB: {e}")
         return []
 
 def analizar_tweets_con_ia(tweets, vacantes):
@@ -185,7 +182,7 @@ if __name__ == "__main__":
         print("⚠️ No hay tweets para analizar.")
         exit()
 
-    vacantes = cargar_vacantes()
+    vacantes = cargar_vacantes_desde_db()
     if not vacantes:
         print("⚠️ No hay vacantes para recomendar.")
         exit()

@@ -1,15 +1,17 @@
-# main.py
+# Nuevo main.py optimizado para solo buscar vacantes por ID directamente en la base de datos
 import os
 import time
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 import tweepy
-import pandas as pd
-import sys
+from backend.database import SessionLocal
+from backend.models import Vacante  # Acceso directo al modelo
 
-# Forzar la codificación a UTF-8 para evitar errores de Unicode
+# UTF-8 para consola
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Cargar las credenciales de la API desde el archivo .env
+# Cargar credenciales desde .env
 load_dotenv()
 
 api_key = os.getenv("API_KEY")
@@ -18,15 +20,13 @@ bearer_token = os.getenv("BEARER_TOKEN")
 access_token = os.getenv("ACCESS_TOKEN")
 access_token_secret = os.getenv("ACCESS_TOKEN_SECRET")
 
-# Comprobar que las credenciales se cargaron correctamente
 if not all([api_key, api_secret, bearer_token, access_token, access_token_secret]):
     print("Error: Faltan credenciales en el archivo .env")
     exit()
+
 try:
-    # Crear cliente de la API v2
     client = tweepy.Client(bearer_token, api_key, api_secret, access_token, access_token_secret)
 
-    # Probar la conexión a la API
     try:
         user = client.get_me()
         print(f"✅ Conexión con la API exitosa. Usuario autenticado: {user.data.username}")
@@ -34,52 +34,37 @@ try:
         print(f"Error de conexión: {e}")
         exit()
 
-    # Cargar el archivo CSV de vacantes
-    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../jobs/vacantes.csv')
-
-    if not os.path.exists(csv_path):
-        print(f"Archivo no encontrado: {csv_path}")
-        exit()
-
-    df = pd.read_csv(csv_path, dtype={'Job Id': str})  # Asegurarse de que los IDs sean cadenas
-
-    # Función para crear un tweet a partir de una fila del DataFrame con formato
-    def crear_tweet(row):
-        tweet_text = (
-            f"🚀 {row['Job Title']} en {row['Company']}!\n\n"
-            f"📍 Ubicación: {row['location']}, {row['Country']}\n"
-            f"💼 Experiencia: {row['Experience']}\n"
-            f"💰 Salario: {row['Salary Range']}\n"
-            f"🎯 Rol: {row['Role']}\n"
-            f"👉 Contacto: {row['Contact Person']} ({row['Contact']})\n\n"
+    def crear_tweet(v):
+        tweet = (
+            f"🚀 {v.titulo} en {v.empresa}!\n\n"
+            f"📍 Ubicación: {v.ubicacion}, {v.pais}\n"
+            f"💼 Experiencia: {v.experiencia}\n"
+            f"💰 Salario: {v.salario}\n"
+            f"🎯 Rol: {v.role}\n"
+            f"👉 Contacto: {v.contacto_nombre} ({v.contacto})\n\n"
             "#Empleo #Vacantes #Trabajo"
         )
-        
-        # Limitar el tweet a 280 caracteres
-        if len(tweet_text) > 280:
-            tweet_text = tweet_text[:277] + "..."
-        
-        return tweet_text.strip()
+        return tweet[:280].strip()
 
-    # Publicar una vacante específica por ID
     def publicar_por_id(vacante_id):
-        row = df[df['Job Id'] == vacante_id]
-        
-        if not row.empty:
-            tweet_text = crear_tweet(row.iloc[0])
+        db = SessionLocal()
+        vacante = db.query(Vacante).filter(Vacante.job_id == int(vacante_id)).first()
+        db.close()
+
+        if vacante:
+            tweet_text = crear_tweet(vacante)
             try:
                 response = client.create_tweet(text=tweet_text)
-                if response and response.data:
-                    tweet_id = response.data.get("id")
-                    print(f"Tweet publicado con éxito: https://twitter.com/user/status/{tweet_id}")
+                tweet_id = response.data.get("id") if response and response.data else None
+                if tweet_id:
+                    print(f"✅ Tweet publicado con éxito: https://twitter.com/user/status/{tweet_id}")
                 else:
-                    print("Error: No se recibió respuesta de la API.")
+                    print("⚠️ No se recibió respuesta válida de la API.")
             except tweepy.TweepyException as e:
-                print(f"Error al publicar el tweet: {e}")
+                print(f"❌ Error al publicar el tweet: {e}")
         else:
-            print(f"La vacante con ID {vacante_id} no existe.")
+            print(f"⚠️ La vacante con ID {vacante_id} no existe.")
 
-    # Publicar múltiples vacantes por una lista de IDs
     def publicar_varias_ids(lista_ids, delay=10):
         for vacante_id in lista_ids:
             publicar_por_id(vacante_id)
@@ -89,13 +74,12 @@ try:
                 print("Proceso interrumpido manualmente.")
                 break
 
-    # Obtener los IDs de las vacantes desde los argumentos de línea de comandos
     if len(sys.argv) > 1:
         ids = sys.argv[1:]
-        print(f"Publicando vacantes con IDs: {ids}")
+        print(f"📤 Publicando vacantes con IDs: {ids}")
         publicar_varias_ids(ids, delay=5)
     else:
-        print("No se proporcionaron IDs de vacantes para publicar.")
+        print("⚠️ No se proporcionaron IDs de vacantes para publicar.")
 
 except Exception as e:
-    print(f"Error general: {e}")
+    print(f"❌ Error general: {e}")
