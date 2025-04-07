@@ -23,6 +23,7 @@ class VacanteBase(BaseModel):
 class VacanteCreate(VacanteBase):
     pass
 
+# Esquema completo con ID incluido
 class Vacante(VacanteBase):
     id: int
 

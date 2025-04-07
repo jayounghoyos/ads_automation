@@ -1,20 +1,45 @@
-# Ignorar el entorno virtual de Python
+# 🔁 Ignorar entorno virtual de Python
 venv/
 
-# Archivos de configuración sensibles
+# 🔐 Archivos de configuración sensibles
 .env
 
-# Archivos temporales de Python
+# 🐍 Archivos temporales de Python
 *.pyc
 __pycache__/
 
-# Archivos del sistema operativo
+# 💻 Archivos del sistema operativo
 *.DS_Store
 Thumbs.db
 
-# Archivos y carpetas del editor de código
+# 🧠 Archivos y carpetas del editor de código
 .idea/
 .vscode/
 
-# Archivos temporales o de registro
+# 🧾 Archivos temporales o de registro
 *.log
+
+# 🧰 Carpetas de construcción de Next.js
+frontend/.next/
+
+# 📦 Dependencias de Node.js
+frontend/node_modules/
+
+# 📜 Lock files que podrían cambiar por entorno
+**/package-lock.json
+**/pnpm-lock.yaml
+**/yarn.lock
+
+# 🧪 Archivos de prueba o coverage si llegas a usar
+coverage/
+*.lcov
+
+# 🚧 Build outputs en general (por si compilas algo con tsup, esbuild, etc.)
+dist/
+build/
+out/
+
+# ⛔ Otros posibles archivos innecesarios
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

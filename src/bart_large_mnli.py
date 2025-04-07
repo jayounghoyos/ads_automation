@@ -132,10 +132,10 @@ def cargar_vacantes_desde_db():
         db.close()
         return [
             {
-                "Job Title": v.title,
-                "Job Description": v.description,
+                "Job Title": v.titulo,
+                "Job Description": v.descripcion,
                 "skills": v.skills,
-                "Company": v.company
+                "Company": v.empresa
             }
             for v in vacantes
         ]
@@ -174,6 +174,46 @@ def analizar_tweets_con_ia(tweets, vacantes):
 
     print("✅ Análisis completado.")
     return "\n🔹 **Recomendaciones Generadas:**\n" + "\n".join(recomendaciones)
+
+def analizar_tweets_csv(csv_path, vacantes):
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception as e:
+        print(f"❌ Error leyendo el archivo CSV: {e}")
+        return []
+
+    try:
+        classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+    except Exception as e:
+        print(f"❌ Error cargando el modelo: {e}")
+        return []
+
+    recomendaciones = []
+
+    for _, row in df.iterrows():
+        tweet_text = row["Texto"]
+        username = row["Username"]
+
+        candidate_labels = [v["Job Title"] for v in vacantes]
+
+        try:
+            result = classifier(tweet_text, candidate_labels, multi_label=True)
+            mejor = result["labels"][0]
+            empresa = next((v["Company"] for v in vacantes if v["Job Title"] == mejor), "Desconocida")
+
+            recomendaciones.append({
+                "usuario": username,
+                "tweet": tweet_text,
+                "vacante": mejor,
+                "empresa": empresa
+            })
+        except Exception as e:
+            print(f"❌ Error analizando tweet: {e}")
+            continue
+
+        time.sleep(1)
+
+    return recomendaciones
 
 # Ejecutar el flujo completo
 if __name__ == "__main__":

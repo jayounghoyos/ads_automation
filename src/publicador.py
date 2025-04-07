@@ -1,4 +1,3 @@
-# Nuevo main.py optimizado para solo buscar vacantes por ID directamente en la base de datos
 import os
 import time
 import sys
