@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { JobCard } from "@/components/job-card"
+import { VacanteEditor } from "@/components/vacante-editor"
 
 type Vacante = {
   job_id: number
@@ -14,6 +15,7 @@ type Vacante = {
 export default function VacantesPage() {
   const [vacantes, setVacantes] = useState<Vacante[]>([])
   const [loading, setLoading] = useState(true)
+  const [vacanteSeleccionada, setVacanteSeleccionada] = useState<Vacante | null>(null)
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/vacantes/")
@@ -29,17 +31,16 @@ export default function VacantesPage() {
     const res = await fetch("http://127.0.0.1:8000/publicar/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vacancies: [{ job_id: id }] })  // 👈 Corrección aquí
-    });
-  
+      body: JSON.stringify({ vacancies: [{ job_id: id }] })
+    })
+
     if (res.ok) {
-      const resultado = await res.json();
-      alert(`✅ ${resultado.mensaje || "Vacante publicada con éxito"}`);
+      const resultado = await res.json()
+      alert(`✅ ${resultado.mensaje || "Vacante publicada con éxito"}`)
     } else {
-      alert("❌ Error al publicar");
+      alert("❌ Error al publicar")
     }
-  };
-  
+  }
 
   const eliminarVacante = async (id: number) => {
     const res = await fetch(`http://127.0.0.1:8000/vacantes/${id}`, {
@@ -53,26 +54,51 @@ export default function VacantesPage() {
     }
   }
 
+  const actualizarVacante = async (updated: Vacante) => {
+    const res = await fetch(`http://127.0.0.1:8000/vacantes/${updated.job_id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated)
+    })
+
+    if (res.ok) {
+      setVacantes(prev =>
+        prev.map(v => v.job_id === updated.job_id ? updated : v)
+      )
+      setVacanteSeleccionada(null)
+      alert("✅ Vacante actualizada")
+    } else {
+      alert("❌ Error al actualizar")
+    }
+  }
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Vacantes disponibles</h1>
-      {loading ? (
-        <p>Cargando vacantes...</p>
-      ) : (
-        <ul className="space-y-4">
-          {vacantes.map((v) => (
-            <li key={v.job_id} className="border rounded-lg p-4 shadow-sm">
-              <div className="font-semibold text-lg">{v.titulo}</div>
-              <div className="text-sm text-gray-500">{v.empresa} - {v.ubicacion}</div>
-              <div className="text-sm mt-1">💰 {v.salario}</div>
-              <div className="flex gap-2 mt-3">
-                <Button onClick={() => alert("Aquí iría el detalle")}>Ver detalle</Button>
-                <Button onClick={() => publicarEnX(v.job_id)}>Publicar en X</Button>
-                <Button variant="destructive" onClick={() => eliminarVacante(v.job_id)}>Eliminar</Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+    <div className="relative">
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Vacantes disponibles</h1>
+        {loading ? (
+          <p>Cargando vacantes...</p>
+        ) : (
+          <div className="space-y-4">
+            {vacantes.map((v) => (
+              <JobCard
+                key={v.job_id}
+                vacante={v}
+                onPublicar={publicarEnX}
+                onEliminar={eliminarVacante}
+                onDetalle={() => setVacanteSeleccionada(v)} // 👈 Nuevo
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {vacanteSeleccionada && (
+        <VacanteEditor
+          vacante={vacanteSeleccionada}
+          onClose={() => setVacanteSeleccionada(null)}
+          onSave={actualizarVacante}
+        />
       )}
     </div>
   )
