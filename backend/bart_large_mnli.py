@@ -1,12 +1,13 @@
 import os
 import tweepy
 import pandas as pd
-import requests
 import time
+import torch
 from transformers import pipeline
 from dotenv import load_dotenv
 from backend.database import SessionLocal
 from backend.crud import get_vacantes
+
 
 # Cargar credenciales de API
 load_dotenv()
@@ -37,11 +38,11 @@ except Exception as e:
     exit()
 
 # Configuración para la búsqueda de tweets
-query = "(#buscoEmpleo OR #buscotrabajo) -is:retweet " #OR #Trabajo OR #Vacante lang:es
+query = "(#buscoEmpleo OR #buscotrabajo) -is:retweet"
 tweet_fields = ["id", "text", "created_at", "author_id"]
 user_fields = ["username"]
 expansions = ["author_id"]
-max_results = 10  # Aumentamos para capturar más tweets
+max_results = 10
 
 # Ruta de almacenamiento de datos
 data_path = "data"
@@ -68,13 +69,14 @@ def buscar_tweets():
     """Busca tweets recientes y los almacena en un CSV antes de analizarlos."""
     print("🔍 Buscando tweets en X...")
 
+    #Busqueda de tweet mas reciente y manejo de errores
     try:
         response = client.search_recent_tweets(
             query=query,
             tweet_fields=tweet_fields,
             expansions=expansions,
             user_fields=user_fields,
-            max_results=max_results
+            max_results=max_results #importante para no pasarse de tokens
         )
 
         if not response or not hasattr(response, "data") or response.data is None:
@@ -91,15 +93,15 @@ def buscar_tweets():
             tweet_text = tweet.text.replace("\n", " ").strip()  # Limpiar saltos de línea
             username = users.get(tweet.author_id, "Desconocido")
 
-            # 1️⃣ Filtrar tweets con enlaces (probablemente reclutadores)
+            # Filtrar tweets con enlaces (probablemente reclutadores)
             if "http" in tweet_text or "https" in tweet_text:
                 continue
 
-            # 2️⃣ Omitir tweets de usuarios en lista negra (reclutadores conocidos)
+            # Omitir tweets de usuarios en lista negra (reclutadores conocidos)
             if username in usuarios_excluidos:
                 continue
 
-            # 3️⃣ Omitir tweets que contengan palabras clave de reclutadores
+            # Omitir tweets que contengan palabras clave de reclutadores
             if any(palabra.lower() in tweet_text.lower() for palabra in palabras_excluidas):
                 continue
 
@@ -148,8 +150,9 @@ def analizar_tweets_con_ia(tweets, vacantes):
     print("🤖 Analizando tweets con IA...")
 
     # Cargar modelo de clasificación
-    model_name = "facebook/bart-large-mnli"
-    classifier = pipeline("zero-shot-classification", model=model_name)
+    model_name = "facebook/bart-large-mnli" #Se ejecuta local con pykle desde la cache
+    device = 0 if torch.cuda.is_available() else -1 #cargar GPU
+    classifier = pipeline("zero-shot-classification", model=model_name, device=device)
 
     recomendaciones = []
 
@@ -160,7 +163,7 @@ def analizar_tweets_con_ia(tweets, vacantes):
         # Construir lista de etiquetas de vacantes
         candidate_labels = [v["Job Title"] for v in vacantes]
 
-        # Clasificación del tweet
+        # Clasificacion del tweet: Label vacantes y se obtiene cercania entre tweet y vacante 
         result = classifier(tweet_texto, candidate_labels, multi_label=True)
         best_match = result["labels"][0]  # Tomar la mejor coincidencia
 
@@ -175,6 +178,7 @@ def analizar_tweets_con_ia(tweets, vacantes):
     print("✅ Análisis completado.")
     return "\n🔹 **Recomendaciones Generadas:**\n" + "\n".join(recomendaciones)
 
+#Analisis local
 def analizar_tweets_csv(csv_path, vacantes):
     try:
         df = pd.read_csv(csv_path)

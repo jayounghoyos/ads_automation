@@ -1,6 +1,8 @@
+#importamos columnas y tipos
 from sqlalchemy import Column, Integer, String, Text
 from .database import Base
 
+#definimos estructura de la vacante SQLAlchemy
 class Vacante(Base):
     __tablename__ = "vacantes"
 

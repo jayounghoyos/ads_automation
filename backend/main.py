@@ -1,15 +1,12 @@
 import os
 import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
-
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import subprocess
 
-from bart_large_mnli import buscar_tweets, cargar_vacantes_desde_db, analizar_tweets_con_ia
+from .bart_large_mnli import buscar_tweets, cargar_vacantes_desde_db, analizar_tweets_con_ia, analizar_tweets_csv
 
 from . import crud, models, schemas, database
 
@@ -44,10 +41,50 @@ def get_db():
 def read_root():
     return {"message": "🚀 Bienvenido a la API de Vacantes!"}
 
-# Ruta para obtener vacantes
+# Ruta para obtener vacantes con rangos
 @app.get("/vacantes/", response_model=list[schemas.Vacante])
 def read_vacantes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return crud.get_vacantes(db, skip=skip, limit=limit)
+    return crud.get_vacantes(db, skip=skip, limit=limit) #devuelve en formato JSON
+
+#obtener vacante por ID
+@app.get("/vacantes/{job_id}", response_model=schemas.Vacante)
+def get_vacante_by_id(job_id: int, db: Session = Depends(get_db)):
+    vacante = db.query(models.Vacante).filter(models.Vacante.job_id == job_id).first()
+    if not vacante:
+        raise HTTPException(status_code=404, detail="Vacante no encontrada")
+    return vacante
+
+@app.get("/analizar/")
+def analizar_y_recomendar():
+    tweets = buscar_tweets()
+    vacantes = cargar_vacantes_desde_db()
+    
+    if not tweets or not vacantes:
+        return {"recomendaciones": [], "mensaje": "Sin datos suficientes para analizar."}
+    
+    resultado = analizar_tweets_con_ia(tweets, vacantes)
+    return {"recomendaciones": resultado}
+
+@app.get("/tweets/analisis_local/")
+def analizar_tweets_local():
+
+    csv_path = "data/tweets_obtenidos.csv"
+
+    if not os.path.exists(csv_path):
+        raise HTTPException(status_code=500, detail="El archivo CSV no existe.")
+
+    vacantes = cargar_vacantes_desde_db()
+
+    if not vacantes:
+        raise HTTPException(status_code=500, detail="No hay vacantes en la base de datos.")
+
+    try:
+        recomendaciones = analizar_tweets_csv(csv_path, vacantes)
+        return recomendaciones
+    except Exception as e:
+        print(f"❌ Error en analizar_tweets_local: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # Ruta para publicar vacantes
 @app.post("/publicar/")
@@ -56,7 +93,7 @@ async def publicar_vacantes(request: Request):
     vacancies = data.get('vacancies', [])
     print("Datos recibidos en publicar_vacantes:", vacancies)
 
-    ids = [str(v['job_id']) for v in vacancies]  # ✅ CORREGIDO
+    ids = [str(v['job_id']) for v in vacancies] 
 
     result = subprocess.run(
         [sys.executable, "src/publicador.py"] + ids,
@@ -72,13 +109,6 @@ async def publicar_vacantes(request: Request):
         return JSONResponse(content={"success": True})
     else:
         return JSONResponse(content={"success": False, "error": result.stderr})
-
-@app.get("/vacantes/{job_id}", response_model=schemas.Vacante)
-def get_vacante_by_id(job_id: int, db: Session = Depends(get_db)):
-    vacante = db.query(models.Vacante).filter(models.Vacante.job_id == job_id).first()
-    if not vacante:
-        raise HTTPException(status_code=404, detail="Vacante no encontrada")
-    return vacante
 
 @app.post("/vacantes/", response_model=schemas.Vacante)
 def create_vacante(vacante: schemas.VacanteCreate, db: Session = Depends(get_db)):
@@ -112,36 +142,3 @@ def delete_vacante(job_id: int, db: Session = Depends(get_db)):
     db.delete(vacante)
     db.commit()
     return {"message": "Vacante eliminada exitosamente"}
-
-@app.get("/analizar/")
-def analizar_y_recomendar():
-    tweets = buscar_tweets()
-    vacantes = cargar_vacantes_desde_db()
-    
-    if not tweets or not vacantes:
-        return {"recomendaciones": [], "mensaje": "Sin datos suficientes para analizar."}
-    
-    resultado = analizar_tweets_con_ia(tweets, vacantes)
-    return {"recomendaciones": resultado}
-
-@app.get("/tweets/analisis_local/")
-def analizar_tweets_local():
-    from bart_large_mnli import analizar_tweets_csv, cargar_vacantes_desde_db
-
-    csv_path = "data/tweets_obtenidos.csv"
-
-    if not os.path.exists(csv_path):
-        raise HTTPException(status_code=500, detail="El archivo CSV no existe.")
-
-    vacantes = cargar_vacantes_desde_db()
-
-    if not vacantes:
-        raise HTTPException(status_code=500, detail="No hay vacantes en la base de datos.")
-
-    try:
-        recomendaciones = analizar_tweets_csv(csv_path, vacantes)
-        return recomendaciones
-    except Exception as e:
-        print(f"❌ Error en analizar_tweets_local: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-

@@ -1,70 +1,129 @@
-# Description
-This project automates job postings on various social media platforms, such as X (Twitter), Meta and Snapchat, using the Django framework. It allows users to upload a CSV file containing job offers, which are then processed and published automatically via APIs. The automation is powered by Tweepy for seamless social media integration.
+# Magneto Ads - Automatización de Vacantes
 
-# How to Run It
-1. **Clone the repository**  
-   ```sh
-   git clone https://https://github.com/jayounghoyos/ads_automation.git
-   cd ads-automation
-2. **Create and activate a virtual environment**
-    ```sh
-    python -m venv venv
-    source venv/bin/activate  # On Windows use: venv\Scripts\activate
-3. **Install dependencies**
-    ```sh
-    pip install -r requirements.txt
-4. **Set up the environment variables**
-   * Create a **.env** file and configure API keys for Twitter (X), Meta, and Django settings.
-5. **Run database migratiions**
-    ```sh
-    python manage.py migrate
-6. **Start the Django server**
-    ```sh
-    python manage.py runserver
-# Documentation
-* **Framework:** Django
-* **Frontend:** HTML, CSS, JavaScript
-* **Backend:** Python, Django
-* **Database:** SQLite / PostgreSQL
-* **APIs:** Tweepy (Twitter API), Meta API
-* **CSV Handling:** Pandas
+Este proyecto automatiza la publicación y recomendación de vacantes laborales en redes sociales como **X (Twitter)**. Utiliza **FastAPI** + **Next.js** con **shadcn/ui** para crear una plataforma intuitiva, moderna y eficiente.
 
-# CSV Structure
+---
 
-## Job Postings CSV Format  
+## Características principales
 
-This project utilizes a structured CSV file to store job vacancy information. The file consists of various fields that define each job posting, including details about the **position, company, location, qualifications, and contact information**.
+- Publicación de vacantes desde un panel web  
+- Filtros por ciudad y salario en tiempo real  
+- Editor lateral estilo email para modificar vacantes  
+- Análisis de tweets con IA para detectar búsquedas de empleo  
+- Publicación automática en X (Twitter) usando `tweepy`  
+- Carga y manejo de vacantes desde DB
 
-### **CSV Fields Description**  
+---
 
-| Column Name         | Description |
-|---------------------|-------------|
-| **Job Id**         | Unique identifier for the job posting. |
-| **Experience**     | Required years of experience (e.g., "2 to 12 Years"). |
-| **Qualifications** | Required educational qualifications (e.g., "BCA", "M.Tech"). |
-| **Salary Range**   | Expected salary range (e.g., "$56K-$116K"). |
-| **Location**       | City where the job is based. |
-| **Country**        | Country where the job is available. |
-| **Latitude** / **Longitude** | Geographic coordinates of the job location. |
-| **Work Type**      | Type of employment (e.g., "Intern", "Full-time"). |
-| **Company Size**   | Number of employees in the company. |
-| **Job Posting Date** | Date when the job was posted. |
-| **Preference**     | Specific hiring preferences (e.g., "Female"). |
-| **Contact Person** | Name of the person handling recruitment. |
-| **Contact**        | Contact details (e.g., phone number). |
-| **Job Title**      | Name of the job role (e.g., "Web Developer"). |
-| **Role**           | Specific job role category (e.g., "Frontend Web Developer"). |
-| **Job Portal**     | Platform where the job was originally posted. |
-| **Job Description** | Brief description of the job responsibilities. |
-| **Benefits**       | List of benefits offered (e.g., "Health Insurance, PTO"). |
-| **Skills**         | Required technical and soft skills for the role. |
-| **Responsibilities** | Key duties and tasks associated with the position. |
-| **Company**        | Name of the company offering the job. |
-| **Company Profile** | JSON-formatted profile of the company, including sector, industry, location, and CEO. |
+## Estructura del proyecto
 
-# Most important functions
+```
+ads_automation/
+│
+├── backend/           -> Backend con FastAPI (API REST y lógica)
+├── frontend/          -> Next.js + Tailwind + shadcn/ui
+├── jobs/              -> Contiene vacantes.csv para exposición
+├── data/              -> Contiene tweets_obtenidos.csv (análisis local)
+├── src/               -> Scripts para publicar y analizar
+└── requirements.txt   -> Dependencias
+```
 
+---
 
-# Notes  
-This project is under constant updates.  
-New features will be added for enhanced automation.
+## Cómo correr el proyecto
+
+### 1. Clonar el repositorio
+
+~~~bash
+git clone https://github.com/jayounghoyos/ads_automation.git
+cd ads_automation
+~~~
+
+### 2. Crear entorno virtual y activarlo
+
+~~~bash
+python -m venv venv
+source venv/bin/activate  -> En Windows: venv\Scripts\activate
+~~~
+
+### 3. Instalar dependencias
+
+~~~bash
+pip install -r requirements.txt
+~~~
+
+### 4. Configurar variables de entorno
+
+Crear un archivo `.env` con las claves de Twitter (X):
+
+```
+API_KEY=tu_api_key
+API_SECRET=tu_secret
+ACCESS_TOKEN=tu_token
+ACCESS_TOKEN_SECRET=tu_token_secret
+```
+
+### 5. Iniciar backend
+
+~~~bash
+uvicorn backend.main:app --reload
+~~~
+
+### 6. Iniciar frontend
+
+~~~bash
+cd frontend
+npm install
+npm run dev
+~~~
+
+---
+
+## Formato de la base de datos (PostgreSQL)
+
+| Campo             | Descripción                                                               |
+|-------------------|---------------------------------------------------------------------------|
+| `job_id`          | ID único de la vacante                                                    |
+| `titulo`          | Título del cargo ofrecido                                                 |
+| `empresa`         | Nombre de la empresa que publica la vacante                               |
+| `descripcion`     | Breve descripción del trabajo y sus responsabilidades                     |
+| `salario`         | Rango salarial o monto ofrecido (texto libre, puede incluir símbolos)     |
+| `ubicacion`       | Ciudad donde se encuentra el trabajo                                      |
+| `Pais`            | País donde está ubicada la vacante                                        |
+| `Experiencia`     | Años de experiencia requeridos                                            |
+| `Tipo_trabajo`    | Tipo de contrato: Tiempo completo, medio tiempo, prácticas, etc.          |
+| `skills`          | Habilidades técnicas y blandas requeridas para el puesto                  |
+| `contacto`        | Información de contacto (teléfono, correo, etc.)                          |
+| `contacto_nombre` | Nombre de la persona responsable del reclutamiento                        |
+| `beneficios`      | Beneficios ofrecidos por la empresa (Ej: salud, bonos, horarios flexibles)|
+| `Portal`          | Sitio o plataforma donde se encontró originalmente la vacante             |
+| `Role`            | Rol o categoría del puesto (Ej: Frontend Developer, Ingeniero de datos)   |
+| `fecha_publicacion`| Fecha en que fue publicada la vacante                                    |
+| `qualifications`  | Títulos académicos o certificados requeridos                              |
+| `tamano_empresa`  | Número de empleados o clasificación de la empresa (pequeña, mediana, etc.)|
+
+Este archivo se puede editar desde la interfaz web.
+
+---
+
+## Tecnologías utilizadas
+
+### 🖥️ Frontend
+
+- Next.js (React 19)  
+- Tailwind CSS  
+- shadcn/ui  
+
+### ⚙️ Backend
+
+- FastAPI  
+- SQLAlchemy + Pydantic  
+- Tweepy (para Twitter/X)  
+- pandas  
+
+---
+
+## Scripts importantes
+
+- `src/publicador.py` → Publica vacantes en X (Twitter)  
+- `src/bart_large_mnli.py` → Clasifica tweets usando BART

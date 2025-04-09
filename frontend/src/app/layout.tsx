@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <link rel="icon" href="/magneto_logo.svg" type="image/png" />
+        <link rel="icon" href="/magneto_logo.svg" type="image/svg+xml" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Navbar />

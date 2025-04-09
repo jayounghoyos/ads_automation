@@ -1,14 +1,15 @@
-from pathlib import Path
+import os
 import pandas as pd
+from pathlib import Path
 from sqlalchemy.orm import sessionmaker
 from backend import models, database
 from dotenv import load_dotenv
-import os
 
 # Cargar variables de entorno
 load_dotenv()
 
 # Crear tabla si no existe
+# Se asegura que esté creada
 models.Base.metadata.create_all(bind=database.engine)
 
 # Leer el archivo CSV
@@ -25,10 +26,11 @@ actualizados = 0
 
 # Iterar por cada fila del CSV
 for _, row in df.iterrows():
+    # Extraer campos del CSV
     job_id = int(row["Job Id"])
     titulo = row["Job Title"]
     empresa = row["Company"]
-    descripcion = row.get("Job Description", "")
+    descripcion = row.get("Job Description", "")# usar cadena vacía si no hay descripcion
     salario = row.get("Salary Range", "")
     ubicacion = row.get("location", "")
     pais = row.get("Country", "")
@@ -44,12 +46,15 @@ for _, row in df.iterrows():
     qualifications = row.get("Qualifications", "")
     tamano_empresa = row.get("Company Size", "")
 
+    # Consultar si ya existe una vacante con este job_id en la base de datos
     vacante_existente = session.query(models.Vacante).filter_by(job_id=job_id).first()
 
     if vacante_existente:
+        # Si la vacante ya existe, verificar si algunos campos clave han cambiado
         cambios = False
+        # Actualizar descripción,salario y skils
         if vacante_existente.descripcion != descripcion:
-            vacante_existente.descripcion = descripcion
+            vacante_existente.descripcion = descripcion 
             cambios = True
         if vacante_existente.salario != salario:
             vacante_existente.salario = salario
@@ -61,6 +66,7 @@ for _, row in df.iterrows():
         if cambios:
             actualizados += 1
     else:
+        # Si la vacante no existe en BD, crear una nueva instancia del modelo Vacante con todos los campos
         nueva = models.Vacante(
             job_id=job_id,
             titulo=titulo,
@@ -86,7 +92,7 @@ for _, row in df.iterrows():
 
 # Guardar cambios
 session.commit()
-session.close()
+session.close() # Cerrar la sesión para liberar la conexión
 
 print(f"✅ {insertados} vacantes insertadas.")
 print(f"🔄 {actualizados} vacantes actualizadas si cambiaron.")

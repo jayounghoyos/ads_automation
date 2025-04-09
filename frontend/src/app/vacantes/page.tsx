@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react"
 import { JobCard } from "@/components/job-card"
 import { VacanteEditor } from "@/components/vacante-editor"
+import { PublicacionTools } from "@/components/publicacion-tools"
 
+// Tipo de datos de cada vacante
 type Vacante = {
   job_id: number
   titulo: string
@@ -16,6 +18,9 @@ export default function VacantesPage() {
   const [vacantes, setVacantes] = useState<Vacante[]>([])
   const [loading, setLoading] = useState(true)
   const [vacanteSeleccionada, setVacanteSeleccionada] = useState<Vacante | null>(null)
+  const [ciudadFiltro, setCiudadFiltro] = useState("")
+  const [salarioMin, setSalarioMin] = useState(0)
+  const [salarioMax, setSalarioMax] = useState(999999)
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/vacantes/")
@@ -72,33 +77,59 @@ export default function VacantesPage() {
     }
   }
 
+  const vacantesFiltradas = vacantes.filter(v => {
+    const salario = parseInt(v.salario.split("-")[0].replace(/[^\d]/g, ""), 10) || 0
+    return (
+      v.ubicacion.toLowerCase().includes(ciudadFiltro.toLowerCase()) &&
+      salario >= salarioMin &&
+      salario <= salarioMax
+    )
+  })
+
   return (
-    <div className="relative">
-      <div className="p-6 max-w-3xl mx-auto">
+    <div className="flex min-h-screen">
+      {/* Columna izquierda */}
+      <aside className="w-[250px] bg-muted p-4 border-r">
+        <PublicacionTools
+          vacantes={vacantes}
+          ciudad={ciudadFiltro}
+          setCiudad={setCiudadFiltro}
+          salarioMin={salarioMin}
+          setSalarioMin={setSalarioMin}
+          salarioMax={salarioMax}
+          setSalarioMax={setSalarioMax}
+        />
+      </aside>
+
+      {/* Columna central */}
+      <main className="flex-1 p-6 overflow-y-auto">
         <h1 className="text-2xl font-bold mb-4">Vacantes disponibles</h1>
         {loading ? (
           <p>Cargando vacantes...</p>
         ) : (
           <div className="space-y-4">
-            {vacantes.map((v) => (
+            {vacantesFiltradas.map((v) => (
               <JobCard
                 key={v.job_id}
                 vacante={v}
                 onPublicar={publicarEnX}
                 onEliminar={eliminarVacante}
-                onDetalle={() => setVacanteSeleccionada(v)} // 👈 Nuevo
+                onDetalle={() => setVacanteSeleccionada(v)}
               />
             ))}
           </div>
         )}
-      </div>
+      </main>
 
+      {/* Columna derecha */}
       {vacanteSeleccionada && (
-        <VacanteEditor
-          vacante={vacanteSeleccionada}
-          onClose={() => setVacanteSeleccionada(null)}
-          onSave={actualizarVacante}
-        />
+        <aside className="w-[350px] bg-white border-l shadow-inner p-4">
+          <VacanteEditor
+            vacante={vacanteSeleccionada}
+            onClose={() => setVacanteSeleccionada(null)}
+            onSave={actualizarVacante}
+          />
+        </aside>
       )}
     </div>
   )
