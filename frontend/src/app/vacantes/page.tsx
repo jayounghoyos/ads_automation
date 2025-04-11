@@ -12,6 +12,7 @@ type Vacante = {
   empresa: string
   ubicacion: string
   salario: string
+  descripcion: string
 }
 
 export default function VacantesPage() {
@@ -21,6 +22,7 @@ export default function VacantesPage() {
   const [ciudadFiltro, setCiudadFiltro] = useState("")
   const [salarioMin, setSalarioMin] = useState(0)
   const [salarioMax, setSalarioMax] = useState(999999)
+  const [busqueda, setBusqueda] = useState("")
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/vacantes/")
@@ -79,12 +81,18 @@ export default function VacantesPage() {
 
   const vacantesFiltradas = vacantes.filter(v => {
     const salario = parseInt(v.salario.split("-")[0].replace(/[^\d]/g, ""), 10) || 0
+    const coincideBusqueda =
+      v.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+      v.empresa.toLowerCase().includes(busqueda.toLowerCase())
+  
     return (
       v.ubicacion.toLowerCase().includes(ciudadFiltro.toLowerCase()) &&
       salario >= salarioMin &&
-      salario <= salarioMax
+      salario <= salarioMax &&
+      coincideBusqueda
     )
   })
+  
 
   return (
     <div className="flex min-h-screen">
@@ -103,7 +111,16 @@ export default function VacantesPage() {
 
       {/* Columna central */}
       <main className="flex-1 p-6 overflow-y-auto">
-        <h1 className="text-2xl font-bold mb-4">Vacantes disponibles</h1>
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold mb-2">Vacantes disponibles</h1>
+          <input
+            type="text"
+            placeholder="🔍 Buscar por título o empresa"
+            className="w-full border border-zinc-300 rounded px-3 py-2 text-sm dark:bg-zinc-800 dark:text-white"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
         {loading ? (
           <p>Cargando vacantes...</p>
         ) : (

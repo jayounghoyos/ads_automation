@@ -1,7 +1,7 @@
 import os
+import time
 import tweepy
 import pandas as pd
-import time
 import torch
 from transformers import pipeline
 from dotenv import load_dotenv
@@ -38,11 +38,11 @@ except Exception as e:
     exit()
 
 # Configuración para la búsqueda de tweets
-query = "(#buscoEmpleo OR #buscotrabajo) -is:retweet"
+query = "(busco trabajo OR busco empleo OR #buscoEmpleo OR #buscotrabajo) -is:retweet lang:es"
 tweet_fields = ["id", "text", "created_at", "author_id"]
 user_fields = ["username"]
 expansions = ["author_id"]
-max_results = 10
+max_results = 20
 
 # Ruta de almacenamiento de datos
 data_path = "data"
@@ -62,7 +62,7 @@ palabras_excluidas = [
 # Lista negra de usuarios de reclutadores conocidos
 usuarios_excluidos = [
     "ManpowerGroupCO", "cipemec", "exelacolombia", "Memakker", "serprietom",
-    "trabajacolombia", "empleoactual", "PortalEmpleo", "VacantesHOY"
+    "trabajacolombia", "empleoactual", "PortalEmpleo", "VacantesHOY", "TrabajoEnZamora", "TrabajoEnAstur", "Trabajo en Asturias"
 ]
 
 def buscar_tweets():
@@ -94,15 +94,17 @@ def buscar_tweets():
             username = users.get(tweet.author_id, "Desconocido")
 
             # Filtrar tweets con enlaces (probablemente reclutadores)
-            if "http" in tweet_text or "https" in tweet_text:
-                continue
+            #if "http" in tweet_text or "https" in tweet_text:
+            #   continue
 
             # Omitir tweets de usuarios en lista negra (reclutadores conocidos)
             if username in usuarios_excluidos:
+                print(f"Filtrado por usuario bloqueado: {username}")
                 continue
 
             # Omitir tweets que contengan palabras clave de reclutadores
             if any(palabra.lower() in tweet_text.lower() for palabra in palabras_excluidas):
+                print(f"Filtrado por palabra clave: {tweet_text}")
                 continue
 
             # Guardar solo tweets relevantes
@@ -154,29 +156,26 @@ def analizar_tweets_con_ia(tweets, vacantes):
     device = 0 if torch.cuda.is_available() else -1 #cargar GPU
     classifier = pipeline("zero-shot-classification", model=model_name, device=device)
 
+    texts = [tweet[2] for tweet in tweets]
+    usernames = [tweet[1] for tweet in tweets]
+    candidate_labels = list(set(v["Job Title"] for v in vacantes if v["Job Title"].strip()))
+
+    results = classifier(texts, candidate_labels, multi_label=True)
     recomendaciones = []
 
-    for tweet in tweets:
-        username = tweet[1]  # Ahora obtenemos el nombre de usuario en vez de solo el ID
-        tweet_texto = tweet[2]
-
-        # Construir lista de etiquetas de vacantes
-        candidate_labels = [v["Job Title"] for v in vacantes]
-
-        # Clasificacion del tweet: Label vacantes y se obtiene cercania entre tweet y vacante 
-        result = classifier(tweet_texto, candidate_labels, multi_label=True)
-        best_match = result["labels"][0]  # Tomar la mejor coincidencia
-
-        # Buscar la empresa de la vacante recomendada
+    for i, result in enumerate(results):
+        best_match = result["labels"][0]
         empresa = next((v["Company"] for v in vacantes if v["Job Title"] == best_match), "Desconocida")
+        recomendaciones.append({
+            "usuario": usernames[i],
+            "tweet": texts[i],
+            "vacante": best_match,
+            "empresa": empresa
+        })
 
-        recomendaciones.append(f"📌 @{username} → {best_match} en {empresa}")
-
-        # Agregar un pequeño delay para evitar sobrecarga
-        time.sleep(1)
 
     print("✅ Análisis completado.")
-    return "\n🔹 **Recomendaciones Generadas:**\n" + "\n".join(recomendaciones)
+    return recomendaciones
 
 #Analisis local
 def analizar_tweets_csv(csv_path, vacantes):
@@ -192,31 +191,29 @@ def analizar_tweets_csv(csv_path, vacantes):
         print(f"❌ Error cargando el modelo: {e}")
         return []
 
+    textos = df["Texto"].tolist()
+    usernames = df["Username"].tolist()
+    candidate_labels = [v["Job Title"] for v in vacantes]
+
+    try:
+        results = classifier(textos, candidate_labels, multi_label=True)
+    except Exception as e:
+        print(f"❌ Error al procesar el batch: {e}")
+        return []
+
     recomendaciones = []
 
-    for _, row in df.iterrows():
-        tweet_text = row["Texto"]
-        username = row["Username"]
+    for i, result in enumerate(results):
+        mejor = result["labels"][0]
+        empresa = next((v["Company"] for v in vacantes if v["Job Title"] == mejor), "Desconocida")
+        recomendaciones.append({
+            "usuario": usernames[i],
+            "tweet": textos[i],
+            "vacante": mejor,
+            "empresa": empresa
+        })
 
-        candidate_labels = [v["Job Title"] for v in vacantes]
-
-        try:
-            result = classifier(tweet_text, candidate_labels, multi_label=True)
-            mejor = result["labels"][0]
-            empresa = next((v["Company"] for v in vacantes if v["Job Title"] == mejor), "Desconocida")
-
-            recomendaciones.append({
-                "usuario": username,
-                "tweet": tweet_text,
-                "vacante": mejor,
-                "empresa": empresa
-            })
-        except Exception as e:
-            print(f"❌ Error analizando tweet: {e}")
-            continue
-
-        time.sleep(1)
-
+    print("✅ Análisis local completado.")
     return recomendaciones
 
 # Ejecutar el flujo completo

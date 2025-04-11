@@ -58,12 +58,10 @@ def get_vacante_by_id(job_id: int, db: Session = Depends(get_db)):
 def analizar_y_recomendar():
     tweets = buscar_tweets()
     vacantes = cargar_vacantes_desde_db()
-    
     if not tweets or not vacantes:
-        return {"recomendaciones": [], "mensaje": "Sin datos suficientes para analizar."}
-    
+        return {"recomendaciones": []}
     resultado = analizar_tweets_con_ia(tweets, vacantes)
-    return {"recomendaciones": resultado}
+    return resultado
 
 @app.get("/tweets/analisis_local/")
 def analizar_tweets_local():

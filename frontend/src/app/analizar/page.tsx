@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Sparkles, Mail } from "lucide-react"
 
 export default function AnalizarPage() {
   const [recomendaciones, setRecomendaciones] = useState<any[]>([])
@@ -37,20 +39,36 @@ export default function AnalizarPage() {
       </h1>
 
       {loading && <p>Cargando análisis...</p>}
-
       {!loading && recomendaciones.length === 0 && <p>No hay recomendaciones.</p>}
 
-      <ul className="space-y-4 mt-4">
-        {recomendaciones.map((rec: any, index) => (
-          <li key={index} className="bg-white p-4 rounded shadow text-zinc-800 dark:bg-zinc-800 dark:text-white">
-            {typeof rec === "string" ? rec : (
-              <>
-                <strong>@{rec.usuario}</strong> → {rec.vacante} en {rec.empresa}
-              </>
+      <div className="grid gap-4">
+        {recomendaciones.map((rec: any, index: number) => (
+          <Card key={index} className="bg-white dark:bg-zinc-900 shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-blue-500" />
+                {typeof rec === "string" ? rec : `@${rec.usuario}`}
+              </CardTitle>
+            </CardHeader>
+            {typeof rec !== "string" && (
+              <CardContent className="text-sm text-zinc-600 dark:text-zinc-300 space-y-2">
+                <p className="break-words">📝 {rec.tweet}</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-pink-500" />
+                  Recomendación:
+                  <span className="text-zinc-900 dark:text-white font-semibold ml-1">
+                    {rec.vacante}
+                  </span>{" "}
+                  en{" "}
+                  <span className="text-zinc-900 dark:text-white font-semibold">
+                    {rec.empresa}
+                  </span>
+                </p>
+              </CardContent>
             )}
-          </li>
+          </Card>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
