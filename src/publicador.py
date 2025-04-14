@@ -49,6 +49,7 @@ try:
             f"💰 Salario: {v.salario}\n"
             f"🎯 Rol: {v.role}\n"
             f"👉 Contacto: {v.contacto_nombre} ({v.contacto})\n\n"
+            f"link: https://www.magneto365.com/es \n"
             "#Empleo #Vacantes #Trabajo"
         )
         return tweet[:280].strip()
