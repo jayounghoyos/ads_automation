@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import subprocess
 
-from .bart_large_mnli import buscar_tweets, cargar_vacantes_desde_db, analizar_tweets_con_ia, analizar_tweets_csv
+from .bart_large_mnli import buscar_tweets, cargar_vacantes_desde_db, analizar_tweets_con_ia, analizar_tweets_csv, comentar_en_tweet_ancla
 
 from . import crud, models, schemas, database
 
@@ -60,8 +60,17 @@ def analizar_y_recomendar():
     vacantes = cargar_vacantes_desde_db()
     if not tweets or not vacantes:
         return {"recomendaciones": []}
+    
     resultado = analizar_tweets_con_ia(tweets, vacantes)
-    return resultado
+
+    try:
+        comentar_en_tweet_ancla(resultado)
+    except Exception as e:
+        print(f"❌ Error comentando automáticamente: {e}")
+
+
+    return {"recomendaciones": resultado}
+
 
 @app.get("/tweets/analisis_local/")
 def analizar_tweets_local():

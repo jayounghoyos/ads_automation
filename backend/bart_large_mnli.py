@@ -3,6 +3,7 @@ import time
 import tweepy
 import pandas as pd
 import torch
+import json
 from transformers import pipeline
 from dotenv import load_dotenv
 from backend.database import SessionLocal
@@ -16,6 +17,7 @@ api_secret = os.getenv("API_SECRET")
 bearer_token = os.getenv("BEARER_TOKEN")
 access_token = os.getenv("ACCESS_TOKEN")
 access_token_secret = os.getenv("ACCESS_TOKEN_SECRET")
+tweet_id_hilo = os.getenv("TWEET_ID_HILO")
 
 # Verificar credenciales
 if not all([api_key, api_secret, bearer_token, access_token, access_token_secret]):
@@ -42,7 +44,7 @@ query = "(busco trabajo OR busco empleo OR #buscoEmpleo OR #buscotrabajo) -is:re
 tweet_fields = ["id", "text", "created_at", "author_id"]
 user_fields = ["username"]
 expansions = ["author_id"]
-max_results = 20
+max_results = 10
 
 # Ruta de almacenamiento de datos
 data_path = "data"
@@ -177,6 +179,23 @@ def analizar_tweets_con_ia(tweets, vacantes):
     print("✅ Análisis completado.")
     return recomendaciones
 
+def comentar_en_tweet_ancla(recomendaciones):
+    for rec in recomendaciones:
+        texto = (
+            f"@{rec['usuario']}\n"
+            f"📝 {rec['tweet']}\n\n"
+            f"Recomendación:\n{rec['vacante']}\nen\n{rec['empresa']}"
+        )
+        try:
+            client.create_tweet(
+                text=texto[:280],
+                in_reply_to_tweet_id=tweet_id_hilo
+            )
+            print("✅ Comentario publicado")
+            time.sleep(2)
+        except Exception as e:
+            print(f"❌ Error comentando: {e}")
+
 #Analisis local
 def analizar_tweets_csv(csv_path, vacantes):
     try:
@@ -230,3 +249,4 @@ if __name__ == "__main__":
 
     recomendaciones = analizar_tweets_con_ia(tweets, vacantes)
     print(recomendaciones)
+    comentar_en_tweet_ancla(recomendaciones)
