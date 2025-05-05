@@ -5,6 +5,7 @@ import { JobCard } from "@/components/job-card"
 import { VacanteEditor } from "@/components/vacante-editor"
 import { PublicacionTools } from "@/components/publicacion-tools"
 
+
 // Tipo de datos de cada vacante
 type Vacante = {
   job_id: number
@@ -23,6 +24,15 @@ export default function VacantesPage() {
   const [salarioMin, setSalarioMin] = useState(0)
   const [salarioMax, setSalarioMax] = useState(999999)
   const [busqueda, setBusqueda] = useState("")
+  const [plataformasSeleccionadas, setPlataformasSeleccionadas] = useState<string[]>([])
+
+  const togglePlataforma = (plataforma: string) => {
+    setPlataformasSeleccionadas(prev =>
+      prev.includes(plataforma)
+        ? prev.filter(p => p !== plataforma)
+        : [...prev, plataforma]
+    )
+  }
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/vacantes/")
@@ -34,20 +44,31 @@ export default function VacantesPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const publicarEnX = async (id: number) => {
-    const res = await fetch("http://127.0.0.1:8000/publicar/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vacancies: [{ job_id: id }] })
-    })
-
-    if (res.ok) {
-      const resultado = await res.json()
-      alert(`✅ ${resultado.mensaje || "Vacante publicada con éxito"}`)
-    } else {
-      alert("❌ Error al publicar")
+  const publicarVacante = async (id: number) => {
+    for (const plataforma of plataformasSeleccionadas) {
+      const url =
+        plataforma === "x"
+          ? "http://127.0.0.1:8000/publicar/"
+          : plataforma === "telegram"
+          ? "http://127.0.0.1:8000/publicar/telegram/"
+          : null
+  
+      if (!url) continue
+  
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vacancies: [{ job_id: id }] }),
+      })
+  
+      if (!res.ok) {
+        alert(`❌ Error al publicar en ${plataforma}`)
+      }
     }
+  
+    alert("✅ Publicación completada")
   }
+  
 
   const eliminarVacante = async (id: number) => {
     const res = await fetch(`http://127.0.0.1:8000/vacantes/${id}`, {
@@ -106,6 +127,8 @@ export default function VacantesPage() {
           setSalarioMin={setSalarioMin}
           salarioMax={salarioMax}
           setSalarioMax={setSalarioMax}
+          plataformasSeleccionadas={plataformasSeleccionadas}
+          togglePlataforma={togglePlataforma}
         />
       </aside>
 
@@ -129,7 +152,7 @@ export default function VacantesPage() {
               <JobCard
                 key={v.job_id}
                 vacante={v}
-                onPublicar={publicarEnX}
+                onPublicar={publicarVacante}
                 onEliminar={eliminarVacante}
                 onDetalle={() => setVacanteSeleccionada(v)}
               />

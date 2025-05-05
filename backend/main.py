@@ -1,5 +1,8 @@
 import os
 import sys
+from src.telegram_publicador import publicar_vacante as publicar_en_telegram
+import asyncio
+from backend.schemas import TelegramRequest
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +20,15 @@ app = FastAPI(
     title="Vacantes API",
     description="Backend para publicar vacantes en redes sociales",
     version="1.0.0"
+)
+
+# Middleware CORS configurado correctamente
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # O ["*"] para pruebas
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Middleware CORS
@@ -149,3 +161,35 @@ def delete_vacante(job_id: int, db: Session = Depends(get_db)):
     db.delete(vacante)
     db.commit()
     return {"message": "Vacante eliminada exitosamente"}
+
+@app.post("/publicar/telegram/")
+async def publicar_en_telegram_endpoint(payload: schemas.TelegramRequest):
+    for v in payload.vacancies:
+        try:
+            await publicar_en_telegram(v.job_id)  # ✅ acceso por atributo
+        except Exception as e:
+            print(f"❌ Error al publicar vacante ID {v.job_id}: {e}")
+            continue
+    return {"message": "Publicación en Telegram completada"}
+
+@app.get("/tweets/metricas/")
+def obtener_metricas_tweets():
+    # Datos simulados por ahora
+    return [
+        {
+            "id": "1919510781323882833",
+            "texto": "Vacante: Data Scientist en Bogotá 🚀",
+            "likes": 11,
+            "retweets": 5,
+            "replies": 2,
+            "impressions": 315
+        },
+        {
+            "id": "1919510781323882834",
+            "texto": "Vacante: Desarrollador React en Medellín 💻",
+            "likes": 15,
+            "retweets": 3,
+            "replies": 1,
+            "impressions": 198
+        }
+    ]

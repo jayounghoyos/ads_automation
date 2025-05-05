@@ -29,3 +29,9 @@ class Vacante(VacanteBase):
 
     class Config:
         orm_mode = True
+
+class TelegramVacante(BaseModel):
+    job_id: int
+
+class TelegramRequest(BaseModel):
+    vacancies: list[TelegramVacante]
