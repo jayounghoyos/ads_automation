@@ -1,31 +1,34 @@
 # Magneto Ads - Automatización de Vacantes
 
-Este proyecto automatiza la publicación y recomendación de vacantes laborales en redes sociales como **X (Twitter)**. Utiliza **FastAPI** + **Next.js** con **shadcn/ui** para crear una plataforma intuitiva, moderna y eficiente.
+Este proyecto automatiza la publicación, edición y análisis de vacantes laborales mediante una plataforma web moderna que combina FastAPI y Next.js con shadcn/ui. Se conecta a redes sociales como X (Twitter) para publicar automáticamente, analizar contenido y mostrar métricas de desempeño.
 
 ---
 
-## Características principales
+## Funcionalidades principales
 
-- Publicación de vacantes desde un panel web  
-- Filtros por ciudad y salario en tiempo real  
+- Publicación automática de vacantes en X y Telegram  
+- Filtros interactivos por ciudad y salario  
 - Editor lateral estilo email para modificar vacantes  
 - Análisis de tweets con IA para detectar búsquedas de empleo  
-- Publicación automática en X (Twitter) usando `tweepy`  
-- Carga y manejo de vacantes desde DB
+- Dashboard de métricas de tweets publicados  
+- Backend estructurado con SQLAlchemy y PostgreSQL  
 
 ---
 
 ## Estructura del proyecto
 
 ```
-ads_automation/
-│
-├── backend/           -> Backend con FastAPI (API REST y lógica)
-├── frontend/          -> Next.js + Tailwind + shadcn/ui
-├── jobs/              -> Contiene vacantes.csv para exposición
-├── data/              -> Contiene tweets_obtenidos.csv (análisis local)
-├── src/               -> Scripts para publicar y analizar
-└── requirements.txt   -> Dependencias
+ads_automation/  
+├── backend/           # API en FastAPI + lógica de negocio  
+├── frontend/          # Next.js + Tailwind + shadcn/ui  
+├── data/              # CSVs para análisis local de tweets  
+├── src/               # Scripts para publicar y clasificar  
+├── venv/              # Entorno virtual Python  
+├── .env               # Variables de entorno (no se sube al repo)  
+├── .gitignore         # Archivos y carpetas ignoradas  
+├── package.json       # Frontend (Node.js)  
+├── requirements.txt   # Dependencias de backend (Python)  
+└── README.md  
 ```
 
 ---
@@ -34,27 +37,28 @@ ads_automation/
 
 ### 1. Clonar el repositorio
 
-~~~bash
+```bash
 git clone https://github.com/jayounghoyos/ads_automation.git
 cd ads_automation
-~~~
+```
 
-### 2. Crear entorno virtual y activarlo
+### 2. Crear y activar entorno virtual
 
-~~~bash
+```bash
 python -m venv venv
-source venv/bin/activate  -> En Windows: venv\Scripts\activate
-~~~
+# En Linux/macOS:
+source venv/bin/activate
+# En Windows:
+venv\Scripts\activate
+```
 
-### 3. Instalar dependencias
+### 3. Instalar dependencias del backend
 
-~~~bash
+```bash
 pip install -r requirements.txt
-~~~
+```
 
-### 4. Configurar variables de entorno
-
-Crear un archivo `.env` con las claves de Twitter (X):
+### 4. Crear archivo .env
 
 ```
 API_KEY=tu_api_key
@@ -63,67 +67,87 @@ ACCESS_TOKEN=tu_token
 ACCESS_TOKEN_SECRET=tu_token_secret
 ```
 
-### 5. Iniciar backend
+### 5. Ejecutar el backend
 
-~~~bash
+```bash
 uvicorn backend.main:app --reload
-~~~
+```
 
-### 6. Iniciar frontend
+### 6. Ejecutar el frontend
 
-~~~bash
+```bash
 cd frontend
 npm install
 npm run dev
-~~~
+```
 
 ---
 
-## Formato de la base de datos (PostgreSQL)
+## Análisis de tweets con IA
 
-| Campo             | Descripción                                                               |
-|-------------------|---------------------------------------------------------------------------|
-| `job_id`          | ID único de la vacante                                                    |
-| `titulo`          | Título del cargo ofrecido                                                 |
-| `empresa`         | Nombre de la empresa que publica la vacante                               |
-| `descripcion`     | Breve descripción del trabajo y sus responsabilidades                     |
-| `salario`         | Rango salarial o monto ofrecido (texto libre, puede incluir símbolos)     |
-| `ubicacion`       | Ciudad donde se encuentra el trabajo                                      |
-| `Pais`            | País donde está ubicada la vacante                                        |
-| `Experiencia`     | Años de experiencia requeridos                                            |
-| `Tipo_trabajo`    | Tipo de contrato: Tiempo completo, medio tiempo, prácticas, etc.          |
-| `skills`          | Habilidades técnicas y blandas requeridas para el puesto                  |
-| `contacto`        | Información de contacto (teléfono, correo, etc.)                          |
-| `contacto_nombre` | Nombre de la persona responsable del reclutamiento                        |
-| `beneficios`      | Beneficios ofrecidos por la empresa (Ej: salud, bonos, horarios flexibles)|
-| `Portal`          | Sitio o plataforma donde se encontró originalmente la vacante             |
-| `Role`            | Rol o categoría del puesto (Ej: Frontend Developer, Ingeniero de datos)   |
-| `fecha_publicacion`| Fecha en que fue publicada la vacante                                    |
-| `qualifications`  | Títulos académicos o certificados requeridos                              |
-| `tamano_empresa`  | Número de empleados o clasificación de la empresa (pequeña, mediana, etc.)|
+El script `src/bart_large_mnli.py` analiza tweets públicos con modelos de clasificación zero-shot (BART). Se puede correr desde la API:
 
-Este archivo se puede editar desde la interfaz web.
+GET /analizar/
+
+También puedes hacer análisis local con un archivo CSV precargado (`data/tweets_obtenidos.csv`).
 
 ---
 
-## Tecnologías utilizadas
+## Dashboard de métricas
 
-### 🖥️ Frontend
+La vista principal ahora incluye un panel con estadísticas de tweets publicados:
 
-- Next.js (React 19)  
+- Total de likes, retweets, respuestas e impresiones  
+- Gráfica de barras comparativa por tweet  
+- En el futuro, se puede expandir para mostrar rendimiento por vacante o canal  
+
+---
+
+## Base de datos (PostgreSQL)
+
+Contiene campos detallados de cada vacante:
+
+- job_id  
+- titulo  
+- empresa  
+- descripcion  
+- salario  
+- ubicacion  
+- pais  
+- experiencia  
+- tipo_trabajo  
+- skills  
+- contacto  
+- contacto_nombre  
+- beneficios  
+- portal  
+- role  
+- fecha_publicacion  
+- qualifications  
+- tamano_empresa  
+
+---
+
+## Tecnologías usadas
+
+**Frontend:**  
+- Next.js  
 - Tailwind CSS  
 - shadcn/ui  
+- recharts  
 
-### ⚙️ Backend
-
+**Backend:**  
 - FastAPI  
-- SQLAlchemy + Pydantic  
-- Tweepy (para Twitter/X)  
+- Pydantic  
+- SQLAlchemy  
+- Tweepy  
 - pandas  
+- Transformers (HuggingFace)  
 
 ---
 
-## Scripts importantes
+## Scripts clave
 
-- `src/publicador.py` → Publica vacantes en X (Twitter)  
-- `src/bart_large_mnli.py` → Clasifica tweets usando BART
+- `src/publicador.py` → Publica en Twitter (X)  
+- `src/bart_large_mnli.py` → Clasifica tweets  
+- `src/telegram_publicador.py` → Publica en Telegram
