@@ -41,7 +41,7 @@ except Exception as e:
 
 # Configuración para la búsqueda de tweets
 query = "(busco trabajo OR busco empleo OR #buscoEmpleo OR #buscotrabajo) -is:retweet lang:es"
-tweet_fields = ["id", "text", "created_at", "author_id"]
+tweet_fields = ["id", "text", "created_at", "author_id","possibly_sensitive"]
 user_fields = ["username"]
 expansions = ["author_id"]
 max_results = 10
@@ -98,7 +98,10 @@ def buscar_tweets():
             # Filtrar tweets con enlaces (probablemente reclutadores)
             #if "http" in tweet_text or "https" in tweet_text:
             #   continue
-
+            
+            if getattr(tweet, "possibly_sensitive", False):
+                print(f"Filtrado por contenido sensible: {tweet.text}")
+                continue
             # Omitir tweets de usuarios en lista negra (reclutadores conocidos)
             if username in usuarios_excluidos:
                 print(f"Filtrado por usuario bloqueado: {username}")
