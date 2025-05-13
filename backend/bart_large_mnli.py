@@ -98,10 +98,11 @@ def buscar_tweets():
             # Filtrar tweets con enlaces (probablemente reclutadores)
             #if "http" in tweet_text or "https" in tweet_text:
             #   continue
-            
+
             if getattr(tweet, "possibly_sensitive", False):
                 print(f"Filtrado por contenido sensible: {tweet.text}")
                 continue
+            
             # Omitir tweets de usuarios en lista negra (reclutadores conocidos)
             if username in usuarios_excluidos:
                 print(f"Filtrado por usuario bloqueado: {username}")
