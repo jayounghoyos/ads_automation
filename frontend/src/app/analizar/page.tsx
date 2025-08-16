@@ -5,8 +5,15 @@ import { useSearchParams } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Sparkles, Mail } from "lucide-react"
 
+interface Recomendacion {
+  usuario?: string
+  tweet?: string
+  vacante?: string
+  empresa?: string
+}
+
 export default function AnalizarPage() {
-  const [recomendaciones, setRecomendaciones] = useState<any[]>([])
+  const [recomendaciones, setRecomendaciones] = useState<Recomendacion[]>([])
   const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
   const modo = searchParams.get("modo") // "ia" o "local"
@@ -42,7 +49,7 @@ export default function AnalizarPage() {
       {!loading && recomendaciones.length === 0 && <p>No hay recomendaciones.</p>}
 
       <div className="grid gap-4">
-        {recomendaciones.map((rec: any, index: number) => (
+        {recomendaciones.map((rec: Recomendacion, index: number) => (
           <Card key={index} className="bg-white dark:bg-zinc-900 shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

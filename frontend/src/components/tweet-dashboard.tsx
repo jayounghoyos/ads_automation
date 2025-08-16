@@ -46,6 +46,10 @@ export default function TweetDashboard() {
   const totalReplies = tweets.reduce((acc, t) => acc + t.replies, 0)
   const totalImpressions = tweets.reduce((acc, t) => acc + t.impressions, 0)
 
+  if (loading) {
+    return <div>Cargando métricas...</div>
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <Card>

@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import TweetDashboard from "@/components/tweet-dashboard"
 
 export default function Home() {
