@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Sparkles, Mail } from "lucide-react"
@@ -12,7 +12,7 @@ interface Recomendacion {
   empresa?: string
 }
 
-export default function AnalizarPage() {
+function AnalizarContent() {
   const [recomendaciones, setRecomendaciones] = useState<Recomendacion[]>([])
   const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
@@ -77,5 +77,13 @@ export default function AnalizarPage() {
         ))}
       </div>
     </div>
+  )
+}
+
+export default function AnalizarPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <AnalizarContent />
+    </Suspense>
   )
 }
